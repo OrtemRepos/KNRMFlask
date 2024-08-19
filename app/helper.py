@@ -1,6 +1,6 @@
 import os
 from typing import (
-    List, Dict
+    List, Dict, Tuple
 )
 import string
 import json
@@ -62,4 +62,18 @@ class Helper:
 
         return index_size
     
-    def _text_to_token_ids
+    def _text_to_token_ids(self, text_list: List[str]) -> torch.FloatTensor:
+        tokenized = []
+        for text in text_list:
+            tokenized_text = self._simple_preproc(text)
+            token_idxs = [self.vocab.get(i, self.vocab['OOV']) for i in tokenized_text]
+            tokenized.append(token_idxs)
+        max_len = max(len(elem) for elem in tokenized)
+        tokenized = [elem + [0] * (max_len - len(elem)) for elem in tokenized]
+        tokenized = torch.LongTensor(tokenized)
+        return tokenized
+    
+    def get_suggestion(self,
+                       query: str, ret_k: int = 10,
+                       ann_k: int = 100) -> List[Tuple[str, str]]:
+        q_tokens = self._simple_preproc(query)
